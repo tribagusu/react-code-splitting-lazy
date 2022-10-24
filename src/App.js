@@ -1,18 +1,16 @@
-import { useState } from "react"
+import React, { useState } from "react"
+
+const MyDefaultComponent = React.lazy(() => import("./MyDefaultCompt"))
 
 function App() {
   const [names, setNames] = useState(null)
 
-  const onLoad = () => {
-    import("./names").then((module) => {
-      setNames(module.default)
-
-      import("./utilities" /* webpackChunkName: "utilities" */).then(
-        ({ makeUpperCase }) => {
-          setNames((names) => makeUpperCase(names))
-        }
-      )
-    })
+  const onLoad = async () => {
+    const names = (await import("./names")).default
+    const makeUpperCase = (
+      await import("./utilities" /* webpackChunkName: "utilities" */)
+    ).makeUpperCase
+    setNames(makeUpperCase(names))
   }
 
   return (
@@ -20,6 +18,11 @@ function App() {
       <div>Home App</div>
       <button onClick={onLoad}>Load</button>
       <div>{JSON.stringify(names)}</div>
+      {names && (
+        <React.Suspense fallback={<div>Loading..</div>}>
+          <MyDefaultComponent />
+        </React.Suspense>
+      )}
     </div>
   )
 }
